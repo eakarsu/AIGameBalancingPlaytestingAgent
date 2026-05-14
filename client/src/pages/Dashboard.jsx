@@ -66,12 +66,21 @@ const aiTables = [
 
 export default function Dashboard({ features }) {
   const [stats, setStats] = useState([]);
+  const [telemetryCount, setTelemetryCount] = useState(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
     apiGet('/dashboard/stats')
-      .then(setStats)
+      .then((res) => {
+        // Support both old array format and new { stats, telemetryCount } format
+        if (Array.isArray(res)) {
+          setStats(res);
+        } else {
+          setStats(res.stats || []);
+          setTelemetryCount(res.telemetryCount ?? null);
+        }
+      })
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
@@ -97,6 +106,24 @@ export default function Dashboard({ features }) {
           <h1>Dashboard</h1>
           <div className="subtitle">AI Game Balancing & Playtesting Platform Overview</div>
         </div>
+        {telemetryCount !== null && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 8,
+            background: 'rgba(99,102,241,0.12)',
+            border: '1px solid rgba(99,102,241,0.3)',
+            borderRadius: 8,
+            padding: '8px 16px',
+            fontSize: 14,
+          }}>
+            <span style={{ fontSize: 18 }}>📡</span>
+            <div>
+              <div style={{ fontWeight: 600, color: 'var(--primary-light)' }}>Telemetry Events</div>
+              <div style={{ fontSize: 20, fontWeight: 700 }}>{telemetryCount.toLocaleString()}</div>
+            </div>
+          </div>
+        )}
       </div>
 
       <h2 style={{ fontSize: 18, color: 'var(--primary-light)', marginBottom: 16, textAlign: 'left' }}>

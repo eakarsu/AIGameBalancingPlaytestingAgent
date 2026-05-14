@@ -5,6 +5,26 @@ import Login from './pages/Login';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import FeaturePage from './pages/FeaturePage';
+import BalanceRecommendations from './pages/BalanceRecommendations';
+import AIPredictions from './pages/AIPredictions';
+import ABAndPatches from './pages/ABAndPatches';
+
+// === Batch 04 Gaps & Frontend Mounts ===
+import CfAgenticPlaytestingBotsThatPlayAuton from './pages/CfAgenticPlaytestingBotsThatPlayAuton';
+import CfEsportsMetaPredictorRecommendingPree from './pages/CfEsportsMetaPredictorRecommendingPree';
+import CfCohortAwareBalanceChangesTargetingH from './pages/CfCohortAwareBalanceChangesTargetingH';
+import CfRollbackAnalysisTrackingHowBalanceC from './pages/CfRollbackAnalysisTrackingHowBalanceC';
+import CfCrossGameBalanceLearningFromDotalea from './pages/CfCrossGameBalanceLearningFromDotalea';
+import CfVoiceVideoSentimentFromTwitchyoutube from './pages/CfVoiceVideoSentimentFromTwitchyoutube';
+import GapNoWinRatePredictorForPost from './pages/GapNoWinRatePredictorForPost';
+import GapNoPlayerRetentionInterventionAi from './pages/GapNoPlayerRetentionInterventionAi';
+import GapNoBalanceSimulationMonteCarloEndpoi from './pages/GapNoBalanceSimulationMonteCarloEndpoi';
+import GapNoAutomatedPatchNoteGenerator from './pages/GapNoAutomatedPatchNoteGenerator';
+import GapNoWebhookDispatchersForLivePatch from './pages/GapNoWebhookDispatchersForLivePatch';
+import GapNoSurveyfocusGroupCollectionBeyondR from './pages/GapNoSurveyfocusGroupCollectionBeyondR';
+import GapNoPublicPatchNotesSite from './pages/GapNoPublicPatchNotesSite';
+import GapNoRealTimeWebsocketTelemetryStreami from './pages/GapNoRealTimeWebsocketTelemetryStreami';
+import GapNoMultiTenantStudioIsolation from './pages/GapNoMultiTenantStudioIsolation';
 
 function ProtectedRoute({ children }) {
   return isLoggedIn() ? children : <Navigate to="/login" />;
@@ -261,9 +281,29 @@ export default function App() {
             <Layout features={features} onLogout={() => setLoggedIn(false)}>
               <Routes>
                 <Route path="/" element={<Dashboard features={features} />} />
+                <Route path="/balance-recommendations-view" element={<BalanceRecommendations />} />
+                <Route path="/ai-predictions" element={<AIPredictions />} />
+                <Route path="/ab-patches" element={<ABAndPatches />} />
                 {features.map((f) => (
                   <Route key={f.key} path={f.path} element={<FeaturePage feature={f} />} />
                 ))}
+          {/* // === Batch 04 Gaps & Frontend Mounts === */}
+          <Route path="/cf-agentic-playtesting-bots-that-play-auton" element={<CfAgenticPlaytestingBotsThatPlayAuton />} />
+          <Route path="/cf-esports-meta-predictor-recommending-pree" element={<CfEsportsMetaPredictorRecommendingPree />} />
+          <Route path="/cf-cohort-aware-balance-changes-targeting-h" element={<CfCohortAwareBalanceChangesTargetingH />} />
+          <Route path="/cf-rollback-analysis-tracking-how-balance-c" element={<CfRollbackAnalysisTrackingHowBalanceC />} />
+          <Route path="/cf-cross-game-balance-learning-from-dotalea" element={<CfCrossGameBalanceLearningFromDotalea />} />
+          <Route path="/cf-voice-video-sentiment-from-twitchyoutube" element={<CfVoiceVideoSentimentFromTwitchyoutube />} />
+          <Route path="/gap-no-win-rate-predictor-for-post" element={<GapNoWinRatePredictorForPost />} />
+          <Route path="/gap-no-player-retention-intervention-ai" element={<GapNoPlayerRetentionInterventionAi />} />
+          <Route path="/gap-no-balance-simulation-monte-carlo-endpoi" element={<GapNoBalanceSimulationMonteCarloEndpoi />} />
+          <Route path="/gap-no-automated-patch-note-generator" element={<GapNoAutomatedPatchNoteGenerator />} />
+          <Route path="/gap-no-webhook-dispatchers-for-live-patch" element={<GapNoWebhookDispatchersForLivePatch />} />
+          <Route path="/gap-no-surveyfocus-group-collection-beyond-r" element={<GapNoSurveyfocusGroupCollectionBeyondR />} />
+          <Route path="/gap-no-public-patch-notes-site" element={<GapNoPublicPatchNotesSite />} />
+          <Route path="/gap-no-real-time-websocket-telemetry-streami" element={<GapNoRealTimeWebsocketTelemetryStreami />} />
+          <Route path="/gap-no-multi-tenant-studio-isolation" element={<GapNoMultiTenantStudioIsolation />} />
+
                 <Route path="*" element={<Navigate to="/" />} />
               </Routes>
             </Layout>

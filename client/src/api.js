@@ -8,10 +8,20 @@ function getHeaders() {
   };
 }
 
+async function handleResponse(res) {
+  if (res.status === 429) {
+    throw Object.assign(new Error('AI rate limit exceeded. Max 20 requests/hour. Please wait before trying again.'), { status: 429 });
+  }
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || res.statusText);
+  }
+  return res.json();
+}
+
 export async function apiGet(path) {
   const res = await fetch(`${BASE}${path}`, { headers: getHeaders() });
-  if (!res.ok) throw new Error((await res.json()).error || res.statusText);
-  return res.json();
+  return handleResponse(res);
 }
 
 export async function apiPost(path, body) {
@@ -20,8 +30,7 @@ export async function apiPost(path, body) {
     headers: getHeaders(),
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error((await res.json()).error || res.statusText);
-  return res.json();
+  return handleResponse(res);
 }
 
 export async function apiPut(path, body) {
@@ -30,8 +39,7 @@ export async function apiPut(path, body) {
     headers: getHeaders(),
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error((await res.json()).error || res.statusText);
-  return res.json();
+  return handleResponse(res);
 }
 
 export async function apiDelete(path) {
@@ -39,8 +47,7 @@ export async function apiDelete(path) {
     method: 'DELETE',
     headers: getHeaders(),
   });
-  if (!res.ok) throw new Error((await res.json()).error || res.statusText);
-  return res.json();
+  return handleResponse(res);
 }
 
 export async function login(email, password) {

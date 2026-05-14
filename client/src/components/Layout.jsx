@@ -37,6 +37,23 @@ export default function Layout({ features, onLogout, children }) {
         </div>
 
         <div className="sidebar-section">
+          <button
+            className={`sidebar-link ${location.pathname === '/balance-recommendations-view' ? 'active' : ''}`}
+            onClick={() => navigate('/balance-recommendations-view')}
+          >
+            <span className="icon">⚖️</span>
+            <span>Balance Viewer</span>
+          </button>
+          <button
+            className={`sidebar-link ${location.pathname === '/ai-predictions' ? 'active' : ''}`}
+            onClick={() => navigate('/ai-predictions')}
+          >
+            <span className="icon">🔮</span>
+            <span>AI Predictions</span>
+          </button>
+        </div>
+
+        <div className="sidebar-section">
           <div className="sidebar-section-title">AI Features</div>
           {aiFeatures.map((f) => (
             <button

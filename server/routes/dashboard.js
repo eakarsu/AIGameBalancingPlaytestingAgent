@@ -29,7 +29,14 @@ router.get('/stats', async (req, res) => {
       })
     );
 
-    res.json(stats);
+    // Telemetry event count
+    let telemetryCount = 0;
+    try {
+      const telResult = await pool.query(`SELECT COUNT(*) as count FROM analytics_metrics`);
+      telemetryCount = parseInt(telResult.rows[0].count);
+    } catch (e) { /* non-fatal */ }
+
+    res.json({ stats, telemetryCount });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

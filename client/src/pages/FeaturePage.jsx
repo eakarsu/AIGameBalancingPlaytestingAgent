@@ -24,22 +24,60 @@ function StatusBadge({ value }) {
   return <span className={`status-badge ${value}`}>{value}</span>;
 }
 
+function Toast({ message, type, onClose }) {
+  useEffect(() => {
+    const t = setTimeout(onClose, 4000);
+    return () => clearTimeout(t);
+  }, [onClose]);
+  return (
+    <div style={{
+      position: 'fixed', top: 20, right: 20, zIndex: 9999,
+      background: type === 'error' ? '#ef4444' : type === 'warning' ? '#f59e0b' : '#10b981',
+      color: '#fff', padding: '12px 20px', borderRadius: 8, fontWeight: 600,
+      boxShadow: '0 4px 20px rgba(0,0,0,0.3)', maxWidth: 400,
+    }}>
+      {message}
+    </div>
+  );
+}
+
+function Pagination({ page, totalPages, onPageChange }) {
+  if (totalPages <= 1) return null;
+  return (
+    <div style={{ display: 'flex', gap: 8, justifyContent: 'center', alignItems: 'center', padding: '16px 0' }}>
+      <button
+        className="btn btn-secondary btn-sm"
+        disabled={page <= 1}
+        onClick={() => onPageChange(page - 1)}
+      >
+        &larr; Prev
+      </button>
+      <span style={{ color: 'var(--text-secondary)', fontSize: 14 }}>
+        Page {page} of {totalPages}
+      </span>
+      <button
+        className="btn btn-secondary btn-sm"
+        disabled={page >= totalPages}
+        onClick={() => onPageChange(page + 1)}
+      >
+        Next &rarr;
+      </button>
+    </div>
+  );
+}
+
 function AIOutput({ result }) {
   if (!result) return null;
 
   const formatContent = (text) => {
-    // Convert markdown-like formatting to styled HTML
     const lines = text.split('\n');
     return lines.map((line, i) => {
-      // Headers
       if (line.startsWith('### ')) return <h3 key={i}>{line.slice(4)}</h3>;
       if (line.startsWith('## ')) return <h2 key={i}>{line.slice(3)}</h2>;
       if (line.startsWith('# ')) return <h1 key={i}>{line.slice(2)}</h1>;
-      // Bold markers
       if (line.startsWith('**') && line.endsWith('**')) {
         return <h3 key={i} style={{ color: 'var(--primary-light)', marginTop: 12 }}>{line.slice(2, -2)}</h3>;
       }
-      // List items
       if (line.startsWith('- ') || line.startsWith('* ')) {
         const content = line.slice(2);
         const boldMatch = content.match(/^\*\*(.*?)\*\*:?\s*(.*)/);
@@ -58,7 +96,6 @@ function AIOutput({ result }) {
           </div>
         );
       }
-      // Numbered list
       if (/^\d+\.\s/.test(line)) {
         const num = line.match(/^(\d+)\.\s(.*)/);
         return (
@@ -68,12 +105,8 @@ function AIOutput({ result }) {
           </div>
         );
       }
-      // Separator
       if (line.startsWith('---')) return <hr key={i} style={{ border: 'none', borderTop: '1px solid rgba(99,102,241,0.15)', margin: '12px 0' }} />;
-      // Empty line
       if (!line.trim()) return <div key={i} style={{ height: 8 }} />;
-      // Regular text
-      // Handle inline bold
       const parts = line.split(/(\*\*.*?\*\*)/g);
       return (
         <p key={i} style={{ margin: '4px 0', lineHeight: 1.7 }}>
@@ -112,6 +145,63 @@ function AIOutput({ result }) {
   );
 }
 
+function AnalysisHistory({ feature }) {
+  const [history, setHistory] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState(null);
+
+  useEffect(() => {
+    if (!feature.ai) return;
+    // Load from reports table (all AI analyses are persisted there)
+    apiGet('/reports?page=1&limit=10')
+      .then((res) => {
+        const rows = Array.isArray(res) ? res : res.data || [];
+        setHistory(rows.filter((r) => r.generated_by === 'AI').slice(0, 5));
+      })
+      .catch(() => setHistory([]))
+      .finally(() => setLoading(false));
+  }, [feature.key]);
+
+  if (!feature.ai || loading || history.length === 0) return null;
+
+  return (
+    <div style={{
+      marginTop: 24,
+      background: 'rgba(99,102,241,0.06)',
+      border: '1px solid rgba(99,102,241,0.15)',
+      borderRadius: 10,
+      padding: 16,
+    }}>
+      <h3 style={{ margin: '0 0 12px', fontSize: 15, color: 'var(--primary-light)' }}>
+        Recent AI Analysis History
+      </h3>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {history.map((item) => (
+          <div key={item.id} style={{
+            background: 'rgba(15,23,42,0.4)',
+            borderRadius: 8,
+            padding: '10px 14px',
+            cursor: 'pointer',
+            border: '1px solid rgba(99,102,241,0.1)',
+          }} onClick={() => setExpanded(expanded === item.id ? null : item.id)}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontWeight: 600, fontSize: 14 }}>{item.name}</span>
+              <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+                {item.created_at ? new Date(item.created_at).toLocaleDateString() : ''}
+              </span>
+            </div>
+            {expanded === item.id && item.findings && (
+              <div style={{ marginTop: 8, fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'pre-wrap', maxHeight: 200, overflow: 'auto' }}>
+                {item.findings.substring(0, 600)}{item.findings.length > 600 ? '...' : ''}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function FeaturePage({ feature }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -123,21 +213,40 @@ export default function FeaturePage({ feature }) {
   const [aiResult, setAiResult] = useState(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [toast, setToast] = useState(null);
 
-  const loadItems = useCallback(() => {
+  // Pagination
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ page: 1, limit: 20, total: 0, totalPages: 1 });
+
+  const showToast = (message, type = 'info') => {
+    setToast({ message, type });
+  };
+
+  const loadItems = useCallback((pageNum = 1) => {
     setLoading(true);
-    apiGet(feature.api)
-      .then(setItems)
+    apiGet(`${feature.api}?page=${pageNum}&limit=20`)
+      .then((res) => {
+        // Support both paginated { data, pagination } and legacy array format
+        if (Array.isArray(res)) {
+          setItems(res);
+        } else {
+          setItems(res.data || []);
+          setPagination(res.pagination || { page: pageNum, limit: 20, total: 0, totalPages: 1 });
+          setPage(pageNum);
+        }
+      })
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [feature.api]);
 
   useEffect(() => {
-    loadItems();
+    loadItems(1);
     setSelected(null);
     setShowForm(false);
     setAiResult(null);
     setSearch('');
+    setPage(1);
   }, [feature.key, loadItems]);
 
   const handleRowClick = (item) => {
@@ -172,10 +281,10 @@ export default function FeaturePage({ feature }) {
     if (!window.confirm(`Delete "${item.name}"? This cannot be undone.`)) return;
     try {
       await apiDelete(`${feature.api}/${item.id}`);
-      loadItems();
+      loadItems(page);
       setSelected(null);
     } catch (err) {
-      alert('Delete failed: ' + err.message);
+      showToast('Delete failed: ' + err.message, 'error');
     }
   };
 
@@ -184,7 +293,6 @@ export default function FeaturePage({ feature }) {
     setSaving(true);
     try {
       const payload = { ...formData };
-      // Convert numeric fields
       feature.fields.forEach((f) => {
         if (f.type === 'number' && payload[f.key] !== '') {
           payload[f.key] = Number(payload[f.key]);
@@ -197,9 +305,9 @@ export default function FeaturePage({ feature }) {
         await apiPost(feature.api, payload);
       }
       setShowForm(false);
-      loadItems();
+      loadItems(page);
     } catch (err) {
-      alert('Save failed: ' + err.message);
+      showToast('Save failed: ' + err.message, 'error');
     } finally {
       setSaving(false);
     }
@@ -214,7 +322,12 @@ export default function FeaturePage({ feature }) {
       const result = await apiPost(feature.aiEndpoint, body);
       setAiResult(result);
     } catch (err) {
-      setAiResult({ analysis: `Error: ${err.message}`, model: null, usage: null });
+      if (err.status === 429 || (err.message && err.message.includes('rate limit'))) {
+        showToast(err.message || 'AI rate limit exceeded. Max 20 requests/hour.', 'error');
+        setAiResult({ analysis: err.message, model: null, usage: null });
+      } else {
+        setAiResult({ analysis: `Error: ${err.message}`, model: null, usage: null });
+      }
     } finally {
       setAiLoading(false);
     }
@@ -242,11 +355,15 @@ export default function FeaturePage({ feature }) {
 
   return (
     <div>
+      {toast && (
+        <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />
+      )}
+
       <div className="page-header">
         <div>
           <h1>{feature.icon} {feature.label}</h1>
           <div className="subtitle">
-            {feature.ai ? 'AI-Powered Feature' : 'Management Feature'} — {items.length} records
+            {feature.ai ? 'AI-Powered Feature' : 'Management Feature'} — {pagination.total || items.length} records
           </div>
         </div>
         <button className="btn btn-primary" onClick={handleNew}>
@@ -275,48 +392,56 @@ export default function FeaturePage({ feature }) {
           <p>Create your first item to get started.</p>
         </div>
       ) : (
-        <div className="data-table-container">
-          <table className="data-table">
-            <thead>
-              <tr>
-                {feature.columns.map((col) => (
-                  <th key={col}>{formatColumnHeader(col)}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((item) => (
-                <tr key={item.id} onClick={() => handleRowClick(item)}>
+        <>
+          <div className="data-table-container">
+            <table className="data-table">
+              <thead>
+                <tr>
                   {feature.columns.map((col) => (
-                    <td key={col}>
-                      {col === 'status' || col === 'priority' || col === 'severity' ? (
-                        col === 'severity' && typeof item[col] === 'number' ? (
-                          <span className={`severity ${item[col] >= 8 ? 'critical' : item[col] >= 5 ? 'medium' : 'low'}`}>
-                            {item[col]}
-                          </span>
-                        ) : (
-                          <StatusBadge value={item[col]} />
-                        )
-                      ) : col === 'rarity' ? (
-                        <span className={`rarity-${item[col]}`} style={{ fontWeight: 600 }}>{item[col]}</span>
-                      ) : col === 'trend' ? (
-                        <span className={`trend-${item[col]}`} style={{ fontWeight: 600 }}>
-                          {item[col] === 'up' ? '↑' : item[col] === 'down' ? '↓' : '→'} {item[col]}
-                        </span>
-                      ) : col === 'change_pct' ? (
-                        <span className={item[col] >= 0 ? 'trend-up' : 'trend-down'} style={{ fontWeight: 600 }}>
-                          {item[col] >= 0 ? '+' : ''}{formatCellValue(item[col], col)}
-                        </span>
-                      ) : (
-                        formatCellValue(item[col], col)
-                      )}
-                    </td>
+                    <th key={col}>{formatColumnHeader(col)}</th>
                   ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {filtered.map((item) => (
+                  <tr key={item.id} onClick={() => handleRowClick(item)}>
+                    {feature.columns.map((col) => (
+                      <td key={col}>
+                        {col === 'status' || col === 'priority' || col === 'severity' ? (
+                          col === 'severity' && typeof item[col] === 'number' ? (
+                            <span className={`severity ${item[col] >= 8 ? 'critical' : item[col] >= 5 ? 'medium' : 'low'}`}>
+                              {item[col]}
+                            </span>
+                          ) : (
+                            <StatusBadge value={item[col]} />
+                          )
+                        ) : col === 'rarity' ? (
+                          <span className={`rarity-${item[col]}`} style={{ fontWeight: 600 }}>{item[col]}</span>
+                        ) : col === 'trend' ? (
+                          <span className={`trend-${item[col]}`} style={{ fontWeight: 600 }}>
+                            {item[col] === 'up' ? '↑' : item[col] === 'down' ? '↓' : '→'} {item[col]}
+                          </span>
+                        ) : col === 'change_pct' ? (
+                          <span className={item[col] >= 0 ? 'trend-up' : 'trend-down'} style={{ fontWeight: 600 }}>
+                            {item[col] >= 0 ? '+' : ''}{formatCellValue(item[col], col)}
+                          </span>
+                        ) : (
+                          formatCellValue(item[col], col)
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <Pagination
+            page={pagination.page}
+            totalPages={pagination.totalPages}
+            onPageChange={(p) => loadItems(p)}
+          />
+        </>
       )}
 
       {/* Detail Panel */}
@@ -367,6 +492,7 @@ export default function FeaturePage({ feature }) {
                     </div>
                   )}
                   {aiResult && <AIOutput result={aiResult} />}
+                  <AnalysisHistory feature={feature} />
                 </div>
               )}
             </div>
