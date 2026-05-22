@@ -8,6 +8,7 @@ import FeaturePage from './pages/FeaturePage';
 import BalanceRecommendations from './pages/BalanceRecommendations';
 import AIPredictions from './pages/AIPredictions';
 import ABAndPatches from './pages/ABAndPatches';
+import PowerCreepSentinel from './pages/PowerCreepSentinel';
 
 // === Batch 04 Gaps & Frontend Mounts ===
 import CfAgenticPlaytestingBotsThatPlayAuton from './pages/CfAgenticPlaytestingBotsThatPlayAuton';
@@ -25,6 +26,11 @@ import GapNoSurveyfocusGroupCollectionBeyondR from './pages/GapNoSurveyfocusGrou
 import GapNoPublicPatchNotesSite from './pages/GapNoPublicPatchNotesSite';
 import GapNoRealTimeWebsocketTelemetryStreami from './pages/GapNoRealTimeWebsocketTelemetryStreami';
 import GapNoMultiTenantStudioIsolation from './pages/GapNoMultiTenantStudioIsolation';
+
+import CodexCustomVizFeature from './pages/CodexCustomVizFeature';
+import CodexOperationsFeature from './pages/CodexOperationsFeature';
+
+import TimelineView from './pages/TimelineView';
 
 function ProtectedRoute({ children }) {
   return isLoggedIn() ? children : <Navigate to="/login" />;
@@ -133,6 +139,9 @@ const features = [
       { key: 'status', label: 'Status', type: 'select', options: ['active','warning','critical'] },
       { key: 'notes', label: 'Notes', type: 'textarea' },
     ]},
+  { key: 'power-creep-sentinel', path: '/power-creep-sentinel', label: 'Power Creep Sentinel', icon: '📉', api: '/power-creep-sentinel', ai: true,
+    columns: ['currentWinRate','previousWinRate','pickRate','banRate','patchAgeDays'],
+    fields: [] },
   { key: 'sentiment', path: '/sentiment', label: 'Sentiment Analysis', icon: '💬', api: '/sentiment', ai: true, aiEndpoint: '/ai/sentiment-analyze',
     columns: ['name','game_title','source','sentiment_score','positive_pct','negative_pct','top_theme','sample_size','status'],
     fields: [
@@ -273,6 +282,10 @@ export default function App() {
 
   return (
     <Routes>
+        <Route path="/insights/timeline" element={<ProtectedRoute><TimelineView /></ProtectedRoute>} />
+        <Route path="/codex/custom-viz" element={<ProtectedRoute><CodexCustomVizFeature /></ProtectedRoute>} />
+        <Route path="/codex/operations" element={<ProtectedRoute><CodexOperationsFeature /></ProtectedRoute>} />
+
       <Route path="/login" element={<Login onLogin={() => setLoggedIn(true)} />} />
       <Route
         path="/*"
@@ -284,6 +297,7 @@ export default function App() {
                 <Route path="/balance-recommendations-view" element={<BalanceRecommendations />} />
                 <Route path="/ai-predictions" element={<AIPredictions />} />
                 <Route path="/ab-patches" element={<ABAndPatches />} />
+                <Route path="/power-creep-sentinel" element={<PowerCreepSentinel />} />
                 {features.map((f) => (
                   <Route key={f.key} path={f.path} element={<FeaturePage feature={f} />} />
                 ))}

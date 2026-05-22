@@ -65,6 +65,7 @@ app.use('/api/ab-cohorts', require('./routes/abCohorts'));
 app.use('/api/patches', require('./routes/patches'));
 app.use('/api/agentic-playtest', require('./routes/agenticPlaytestBots'));
 app.use('/api/esports-meta', require('./routes/esportsMetaPredictor'));
+app.use('/api/power-creep-sentinel', require('./routes/powerCreepSentinel'));
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
