@@ -9,6 +9,27 @@ export default function CfCrossGameBalanceLearningFromDotalea() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const sampleRequests = [
+      {
+          "label": "Scenario",
+          "value": "Run Cross-game balance learning from Dota/League/Valorant patch for a realistic customer case.\nContext: a team needs a practical recommendation based on incomplete operating data.\nGoal: identify the best action, key risks, missing information, and expected business impact.\nReturn: summary, prioritized action plan, assumptions, and follow-up questions."
+      },
+      {
+          "label": "Data sample",
+          "value": "Analyze this Cross-game balance learning from Dota/League/Valorant patch data sample.\nInput records:\n- Record 1: urgent, customer impact high, owner unassigned\n- Record 2: medium priority, blocked by missing data\n- Record 3: recurring issue, automation opportunity\nReturn structured findings, anomalies, recommendations, and confidence."
+      },
+      {
+          "label": "Executive review",
+          "value": "Prepare an executive review for Cross-game balance learning from Dota/League/Valorant patch.\nAudience: business owner, operations lead, and implementation team.\nInclude impact, risk, estimated effort, decision points, and a concise next-step plan."
+      }
+  ];
+
+  const applySampleRequest = (value) => {
+    setInput(value);
+    setError(null);
+    setResult(null);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -39,6 +60,19 @@ export default function CfCrossGameBalanceLearningFromDotalea() {
       <h1 style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>Cross-game balance learning from Dota/League/Valorant patch </h1>
       <p style={{ color: '#666', marginBottom: '1.5rem' }}>Cross-game balance learning from Dota/League/Valorant patch histories.</p>
       <form onSubmit={handleSubmit} style={{ marginBottom: '1.5rem' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 10 }}>
+          {sampleRequests.map((sample) => (
+            <button
+              key={sample.label}
+              type="button"
+              onClick={() => applySampleRequest(sample.value)}
+              style={{ padding: '6px 10px', background: '#eef2ff', color: '#1e3a8a', border: '1px solid #c7d2fe', borderRadius: 6, cursor: 'pointer', fontSize: 12, fontWeight: 600 }}
+            >
+              {sample.label}
+            </button>
+          ))}
+        </div>
+
         <textarea
           value={input}
           onChange={(e) => setInput(e.target.value)}
