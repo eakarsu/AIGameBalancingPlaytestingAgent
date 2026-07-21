@@ -1,4 +1,7 @@
 require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
+if (process.env.ALLOW_DEMO_SEED !== 'true' || process.env.NODE_ENV === 'production') {
+  throw new Error('Demo seed is quarantined; set ALLOW_DEMO_SEED=true outside production to run it explicitly');
+}
 const { Pool } = require('pg');
 const bcrypt = require('bcryptjs');
 
@@ -310,10 +313,15 @@ async function seed() {
   `);
 
   // Seed user
-  const hash = await bcrypt.hash('password123', 10);
+  const demoPassword = process.env.SEED_DEMO_PASSWORD;
+  const demoEmail = process.env.SEED_ADMIN_EMAIL;
+  if (!demoPassword || demoPassword.length < 12 || !demoEmail) {
+    throw new Error('SEED_DEMO_PASSWORD (12+ characters) and SEED_ADMIN_EMAIL are required');
+  }
+  const hash = await bcrypt.hash(demoPassword, 12);
   await pool.query(
     `INSERT INTO users (email, password_hash, name, role) VALUES ($1, $2, $3, $4)`,
-    ['admin@gamebalancer.com', hash, 'Game Admin', 'admin']
+    [demoEmail.trim().toLowerCase(), hash, 'Game Admin', 'admin']
   );
 
   // Seed playtest_sessions (15 items)

@@ -82,6 +82,8 @@ app.use('/api/gap-no-public-patch-notes-site', route_gap_no_public_patch_notes_s
 app.use('/api/gap-no-real-time-websocket-telemetry-streami', route_gap_no_real_time_websocket_telemetry_streami);
 app.use('/api/gap-no-multi-tenant-studio-isolation', route_gap_no_multi_tenant_studio_isolation);
 
+app.use('/api/governed-playtests', require('./governance'));
+
 app.listen(PORT, () => {
   console.log(`✅ Backend server running on port ${PORT}`);
 });

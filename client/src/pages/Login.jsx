@@ -24,11 +24,6 @@ export default function Login({ onLogin }) {
     }
   };
 
-  const autoFill = () => {
-    setEmail('admin@gamebalancer.com');
-    setPassword('password123');
-  };
-
   return (
     <div className="login-page">
       <div className="login-container">
@@ -66,9 +61,6 @@ export default function Login({ onLogin }) {
           </button>
         </form>
 
-        <button onClick={autoFill} className="btn btn-auto-fill btn-full" type="button">
-          Auto-Fill Demo Credentials
-        </button>
       </div>
     </div>
   );

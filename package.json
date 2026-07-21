@@ -4,11 +4,13 @@
   "description": "AI Game Balancing & Playtesting Agent",
   "private": true,
   "scripts": {
+    "start": "node server/index.js",
     "install:all": "npm install && cd client && npm install",
     "server": "nodemon server/index.js",
     "client": "cd client && npm run dev",
     "dev": "concurrently \"npm run server\" \"npm run client\"",
-    "seed": "node server/seed.js"
+    "seed": "node server/seed.js",
+    "test": "node --test server/governance/tests/*.test.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
