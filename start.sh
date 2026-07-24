@@ -4,6 +4,12 @@ set -euo pipefail
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$PROJECT_DIR"
 
+[[ -f .env ]] || { echo "Create .env from .env.example; no defaults are generated." >&2; exit 1; }
+set -a
+# shellcheck disable=SC1091
+source .env
+set +a
+
 if [[ -d backend ]]; then
   API_DIR=backend
   UI_DIR=frontend
@@ -47,6 +53,17 @@ start_services() {
   [[ -d "$API_PREFIX/node_modules" && -d "$UI_DIR/node_modules" ]] ||
     { echo "Dependencies are absent. Run locked installs explicitly before startup." >&2; return 1; }
 
+  [[ "$BACKEND_PORT" != "$FRONTEND_PORT" ]] || { echo "Backend and frontend ports must differ." >&2; return 1; }
+  for port in "$BACKEND_PORT" "$FRONTEND_PORT"; do
+    if command -v lsof >/dev/null 2>&1 && lsof -tiTCP:"$port" -sTCP:LISTEN >/dev/null 2>&1; then
+      echo "Port $port is already in use." >&2
+      return 1
+    fi
+  done
+  if [[ "${MIGRATE_ON_START:-false}" == "true" ]]; then
+    node server/scripts/runtime-init.js
+  fi
+
   BACKEND_PORT="${BACKEND_PORT:?BACKEND_PORT is required}" npm --prefix "$API_PREFIX" start &
   api_pid=$!
   if node -e "const p=require('./$UI_DIR/package.json');process.exit(p.scripts&&p.scripts.dev?0:1)"; then
@@ -64,7 +81,7 @@ start_services() {
   wait "$api_pid" "$ui_pid"
 }
 
-case "${1:-check}" in
+case "${1:-start}" in
   check) check ;;
   migrate) migrate ;;
   start) start_services ;;

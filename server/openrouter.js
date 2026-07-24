@@ -1,8 +1,11 @@
+const http = require('http');
 const https = require('https');
 
 async function callOpenRouter(systemPrompt, userPrompt) {
   const apiKey = process.env.OPENROUTER_API_KEY;
   const model = process.env.OPENROUTER_MODEL || 'anthropic/claude-3-5-sonnet-20241022';
+  const baseUrl = (process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1').replace(/\/$/, '');
+  const endpoint = new URL(`${baseUrl}/chat/completions`);
 
   const body = JSON.stringify({
     model,
@@ -16,8 +19,9 @@ async function callOpenRouter(systemPrompt, userPrompt) {
 
   return new Promise((resolve, reject) => {
     const options = {
-      hostname: 'openrouter.ai',
-      path: '/api/v1/chat/completions',
+      hostname: endpoint.hostname,
+      port: endpoint.port || undefined,
+      path: `${endpoint.pathname}${endpoint.search}`,
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -27,7 +31,8 @@ async function callOpenRouter(systemPrompt, userPrompt) {
       },
     };
 
-    const req = https.request(options, (res) => {
+    const transport = endpoint.protocol === 'http:' ? http : https;
+    const req = transport.request(options, (res) => {
       let data = '';
       res.on('data', (chunk) => (data += chunk));
       res.on('end', () => {
