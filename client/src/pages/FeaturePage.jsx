@@ -1,8 +1,52 @@
 import { useEffect, useState, useCallback } from 'react';
 import { apiGet, apiPost, apiPut, apiDelete } from '../api';
+import AIReport from '../components/AIReport';
+import FullFieldPresets from '../components/FullFieldPresets';
 
 function formatColumnHeader(col) {
   return col.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+const GAME_EXAMPLES = [
+  { label: 'Competitive sample', name: 'Ranked Arena baseline', game: 'Aether Arena', focus: 'Diamond-ranked matches from patch 1.42', note: 'Review the ranked sample, flag missing evidence, and compare changes against the current live baseline.' },
+  { label: 'Onboarding sample', name: 'New-player journey', game: 'Skyforge Tactics', focus: 'First-session players in the guided campaign', note: 'Use the onboarding cohort only; preserve accessibility requirements and identify assumptions before tuning.' },
+  { label: 'Live-ops sample', name: 'Season launch review', game: 'Neon Rally', focus: 'Season 8 launch telemetry across North America and Europe', note: 'Prioritize reversible changes, monitor guardrails, and require review before any live rollout.' },
+];
+
+function featurePresetValue(field, variant) {
+  const example = GAME_EXAMPLES[variant];
+  if (field.type === 'select') return field.options[variant % field.options.length];
+  if (field.type === 'number') {
+    if (/severity/.test(field.key)) return [6, 4, 8][variant];
+    if (/count|sample/.test(field.key)) return [250, 500, 1000][variant];
+    if (/duration|time/.test(field.key)) return [25, 40, 60][variant];
+    if (/rate|pct|score|confidence|impact/.test(field.key)) return [52, 68, 81][variant];
+    if (/level/.test(field.key)) return [12, 5, 28][variant];
+    return [10, 20, 30][variant];
+  }
+  const values = {
+    name: example.name,
+    game_title: example.game,
+    currency_name: ['Credits', 'Stars', 'Tokens'][variant],
+    level_range: ['1-50', '1-10', '20-80'][variant],
+    player_archetype: ['Competitive strategist', 'New explorer', 'Returning collector'][variant],
+    target_element: ['Vanguard', 'Tutorial encounter', 'Season reward track'][variant],
+    dominant_strategy: ['Early objective control', 'Defensive resource saving', 'Speed-focused loadout'][variant],
+    top_theme: ['Queue fairness', 'Tutorial clarity', 'Reward pacing'][variant],
+    affected_system: ['Ranked combat', 'Tutorial progression', 'Season economy'][variant],
+    description: example.focus,
+    reproduction_steps: `1. Load the ${example.game} controlled test fixture.\n2. Apply the ${example.name.toLowerCase()} setup.\n3. Repeat the observed sequence and record the result.`,
+    mitigation: 'Use a staged configuration change, monitor the stated cohort, and retain a rollback path.',
+    notes: example.note,
+  };
+  return values[field.key] || `${example.focus}. ${example.note}`;
+}
+
+function featurePresets(feature) {
+  return GAME_EXAMPLES.map((example, variant) => ({
+    label: example.label,
+    values: Object.fromEntries(feature.fields.map((field) => [field.key, featurePresetValue(field, variant)])),
+  }));
 }
 
 function formatCellValue(val, col) {
@@ -67,82 +111,7 @@ function Pagination({ page, totalPages, onPageChange }) {
 }
 
 function AIOutput({ result }) {
-  if (!result) return null;
-
-  const formatContent = (text) => {
-    const lines = text.split('\n');
-    return lines.map((line, i) => {
-      if (line.startsWith('### ')) return <h3 key={i}>{line.slice(4)}</h3>;
-      if (line.startsWith('## ')) return <h2 key={i}>{line.slice(3)}</h2>;
-      if (line.startsWith('# ')) return <h1 key={i}>{line.slice(2)}</h1>;
-      if (line.startsWith('**') && line.endsWith('**')) {
-        return <h3 key={i} style={{ color: 'var(--primary-light)', marginTop: 12 }}>{line.slice(2, -2)}</h3>;
-      }
-      if (line.startsWith('- ') || line.startsWith('* ')) {
-        const content = line.slice(2);
-        const boldMatch = content.match(/^\*\*(.*?)\*\*:?\s*(.*)/);
-        if (boldMatch) {
-          return (
-            <div key={i} style={{ padding: '4px 0 4px 16px', display: 'flex', gap: 4 }}>
-              <span style={{ color: 'var(--text-muted)' }}>&#x2022;</span>
-              <span><strong style={{ color: 'var(--accent)' }}>{boldMatch[1]}</strong>{boldMatch[2] ? `: ${boldMatch[2]}` : ''}</span>
-            </div>
-          );
-        }
-        return (
-          <div key={i} style={{ padding: '4px 0 4px 16px', display: 'flex', gap: 4 }}>
-            <span style={{ color: 'var(--text-muted)' }}>&#x2022;</span>
-            <span>{content}</span>
-          </div>
-        );
-      }
-      if (/^\d+\.\s/.test(line)) {
-        const num = line.match(/^(\d+)\.\s(.*)/);
-        return (
-          <div key={i} style={{ padding: '4px 0 4px 16px', display: 'flex', gap: 8 }}>
-            <span style={{ color: 'var(--primary-light)', fontWeight: 700, minWidth: 20 }}>{num[1]}.</span>
-            <span>{num[2]}</span>
-          </div>
-        );
-      }
-      if (line.startsWith('---')) return <hr key={i} style={{ border: 'none', borderTop: '1px solid rgba(99,102,241,0.15)', margin: '12px 0' }} />;
-      if (!line.trim()) return <div key={i} style={{ height: 8 }} />;
-      const parts = line.split(/(\*\*.*?\*\*)/g);
-      return (
-        <p key={i} style={{ margin: '4px 0', lineHeight: 1.7 }}>
-          {parts.map((part, j) => {
-            if (part.startsWith('**') && part.endsWith('**')) {
-              return <strong key={j} style={{ color: 'var(--accent)' }}>{part.slice(2, -2)}</strong>;
-            }
-            return part;
-          })}
-        </p>
-      );
-    });
-  };
-
-  return (
-    <div className="ai-output">
-      <div className="ai-output-header">
-        <div className="ai-icon">🤖</div>
-        <div>
-          <div className="ai-label">AI Analysis Result</div>
-        </div>
-        {result.model && <div className="ai-model">{result.model}</div>}
-      </div>
-      <div className="ai-output-body">
-        {formatContent(result.analysis)}
-      </div>
-      {result.usage && (
-        <div className="ai-output-footer">
-          <span>Tokens: {result.usage.total_tokens?.toLocaleString()}</span>
-          <span>Prompt: {result.usage.prompt_tokens?.toLocaleString()}</span>
-          <span>Completion: {result.usage.completion_tokens?.toLocaleString()}</span>
-          {result.id && <span style={{ marginLeft: 'auto' }}>ID: {result.id.slice(0, 20)}...</span>}
-        </div>
-      )}
-    </div>
-  );
+  return <AIReport response={result} title="AI analysis result" />;
 }
 
 function AnalysisHistory({ feature }) {
@@ -160,7 +129,7 @@ function AnalysisHistory({ feature }) {
       })
       .catch(() => setHistory([]))
       .finally(() => setLoading(false));
-  }, [feature.key]);
+  }, [feature.ai, feature.key]);
 
   if (!feature.ai || loading || history.length === 0) return null;
 
@@ -191,9 +160,7 @@ function AnalysisHistory({ feature }) {
               </span>
             </div>
             {expanded === item.id && item.findings && (
-              <div style={{ marginTop: 8, fontSize: 13, color: 'var(--text-secondary)', whiteSpace: 'pre-wrap', maxHeight: 200, overflow: 'auto' }}>
-                {item.findings.substring(0, 600)}{item.findings.length > 600 ? '...' : ''}
-              </div>
+              <AIReport response={item.findings} title={item.name || 'Saved AI analysis'} />
             )}
           </div>
         ))}
@@ -515,6 +482,14 @@ export default function FeaturePage({ feature }) {
             </div>
             <form onSubmit={handleSave}>
               <div className="detail-body">
+                {feature.ai && (
+                  <FullFieldPresets
+                    value={formData}
+                    presets={featurePresets(feature)}
+                    disabled={saving}
+                    onChange={(next) => setFormData(next)}
+                  />
+                )}
                 <div className="detail-grid">
                   {feature.fields.map((f) => (
                     <div key={f.key} className="form-group" style={f.type === 'textarea' ? { gridColumn: '1/-1' } : {}}>

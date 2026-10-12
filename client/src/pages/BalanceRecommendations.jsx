@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { apiGet } from '../api';
+import AIReport from '../components/AIReport';
 
 const ENTITY_TYPES = ['character', 'weapon', 'item', 'skill', 'ability', 'General', 'adjustment', 'other'];
 
@@ -25,10 +26,6 @@ export default function BalanceRecommendations() {
   const [pagination, setPagination] = useState({ page: 1, limit: 50, total: 0, totalPages: 1 });
   const [expanded, setExpanded] = useState(null);
 
-  useEffect(() => {
-    loadItems(1);
-  }, []);
-
   const loadItems = (pageNum) => {
     setLoading(true);
     apiGet(`/balance?page=${pageNum}&limit=50`)
@@ -44,6 +41,23 @@ export default function BalanceRecommendations() {
       .catch(console.error)
       .finally(() => setLoading(false));
   };
+
+  useEffect(() => {
+    let active = true;
+    apiGet('/balance?page=1&limit=50')
+      .then((res) => {
+        if (!active) return;
+        if (Array.isArray(res)) setItems(res);
+        else {
+          setItems(res.data || []);
+          setPagination(res.pagination || { page: 1, limit: 50, total: 0, totalPages: 1 });
+          setPage(1);
+        }
+      })
+      .catch(console.error)
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, []);
 
   const groups = groupByTargetElement(items);
 
@@ -134,19 +148,7 @@ export default function BalanceRecommendations() {
                     </div>
 
                     {expanded === rec.id && rec.notes && (
-                      <div style={{
-                        marginTop: 12,
-                        padding: 12,
-                        background: 'rgba(99,102,241,0.06)',
-                        borderRadius: 8,
-                        fontSize: 13,
-                        color: 'var(--text-secondary)',
-                        whiteSpace: 'pre-wrap',
-                        maxHeight: 300,
-                        overflow: 'auto',
-                      }}>
-                        {rec.notes}
-                      </div>
+                      <AIReport response={rec.notes} title={rec.name || 'Saved balance recommendation'} />
                     )}
                   </div>
                 ))}

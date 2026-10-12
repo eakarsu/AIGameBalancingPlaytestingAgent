@@ -1,3 +1,4 @@
+import AIReportLibrary from "./AIReportLibrary";
 import { useNavigate, useLocation } from 'react-router-dom';
 import { logout, getUser } from '../api';
 
@@ -94,7 +95,7 @@ export default function Layout({ features, onLogout, children }) {
             Sign Out
           </button>
         </div>
-      </nav>
+      <AIReportLibrary /></nav>
 
       <main className="main-content">{children}</main>
     </div>
