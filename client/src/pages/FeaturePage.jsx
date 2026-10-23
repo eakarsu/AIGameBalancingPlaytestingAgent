@@ -413,8 +413,8 @@ export default function FeaturePage({ feature }) {
 
       {/* Detail Panel */}
       {selected && (
-        <div className="detail-overlay" onClick={(e) => { if (e.target === e.currentTarget) setSelected(null); }}>
-          <div className="detail-panel">
+        <div className="detail-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }} onClick={(e) => { if (e.target === e.currentTarget) setSelected(null); }}>
+          <div className="detail-panel" role="dialog" aria-modal="true" style={{ margin: 'auto', borderRadius: 14, maxHeight: '88vh', width: '90%', maxWidth: 680 }}>
             <div className="detail-header">
               <h2>{feature.icon} {selected.name}</h2>
               <button className="close-btn" onClick={() => setSelected(null)}>✕</button>
@@ -464,9 +464,9 @@ export default function FeaturePage({ feature }) {
               )}
             </div>
             <div className="detail-actions">
-              <button className="btn btn-secondary" onClick={() => setSelected(null)}>Close</button>
               <button className="btn btn-primary" onClick={() => handleEdit(selected)}>Edit</button>
               <button className="btn btn-danger" onClick={() => handleDelete(selected)}>Delete</button>
+              <button className="btn btn-secondary" onClick={() => setSelected(null)}>Cancel</button>
             </div>
           </div>
         </div>

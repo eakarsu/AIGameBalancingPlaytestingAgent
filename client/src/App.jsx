@@ -9,6 +9,7 @@ import BalanceRecommendations from './pages/BalanceRecommendations';
 import AIPredictions from './pages/AIPredictions';
 import ABAndPatches from './pages/ABAndPatches';
 import PowerCreepSentinel from './pages/PowerCreepSentinel';
+import TasksPage from './pages/TasksPage';
 
 // === Batch 04 Gaps & Frontend Mounts ===
 import CfAgenticPlaytestingBotsThatPlayAuton from './pages/CfAgenticPlaytestingBotsThatPlayAuton';
@@ -293,7 +294,8 @@ export default function App() {
           loggedIn ? (
             <Layout features={features} onLogout={() => setLoggedIn(false)}>
               <Routes>
-                <Route path="/" element={<Dashboard features={features} />} />
+                <Route path="/tasks" element={<TasksPage />} />
+          <Route path="/" element={<Dashboard features={features} />} />
                 <Route path="/balance-recommendations-view" element={<BalanceRecommendations />} />
                 <Route path="/ai-predictions" element={<AIPredictions />} />
                 <Route path="/ab-patches" element={<ABAndPatches />} />

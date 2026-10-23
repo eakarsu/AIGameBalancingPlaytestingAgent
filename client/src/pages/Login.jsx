@@ -9,12 +9,11 @@ export default function Login({ onLogin }) {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const signInWith = async (loginEmail, loginPassword) => {
     setError('');
     setLoading(true);
     try {
-      await login(email, password);
+      await login(loginEmail, loginPassword);
       onLogin();
       navigate('/');
     } catch (err) {
@@ -22,6 +21,11 @@ export default function Login({ onLogin }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    await signInWith(email, password);
   };
 
   return (
@@ -59,9 +63,11 @@ export default function Login({ onLogin }) {
           <button
             type="button"
             onClick={() => {
-              setEmail(import.meta.env.VITE_DEMO_EMAIL || '');
-              setPassword(import.meta.env.VITE_DEMO_PASSWORD || '');
-              setError('');
+              const demoEmail = import.meta.env.VITE_DEMO_EMAIL || '';
+              const demoPassword = import.meta.env.VITE_DEMO_PASSWORD || '';
+              setEmail(demoEmail);
+              setPassword(demoPassword);
+              signInWith(demoEmail, demoPassword);
             }}
             disabled={loading || !import.meta.env.VITE_DEMO_EMAIL || !import.meta.env.VITE_DEMO_PASSWORD}
             aria-label="Fill Demo Credentials"

@@ -59,6 +59,7 @@ app.use('/api/reports', reportsRoutes);
 app.use('/api/ai', aiRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/telemetry', telemetryRoutes);
+app.use('/api/tasks', require('./routes/tasks'));
 
 // Apply pass 5 — additive mechanical routes
 app.use('/api/ab-cohorts', require('./routes/abCohorts'));
